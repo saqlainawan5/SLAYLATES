@@ -1,0 +1,106 @@
+/* src/pages/ProductsPage.css */
+.products-page { padding-bottom: 5rem; }
+
+.products-page__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2rem;
+}
+.products-page__eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.products-page__title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 300;
+}
+.products-page__count {
+  font-size: 0.8rem;
+  color: var(--warm-gray);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.products-page__toolbar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.products-page__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  background: var(--warm-white);
+  flex: 1;
+  min-width: 200px;
+  color: var(--warm-gray);
+  transition: var(--transition);
+}
+.products-page__search:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,169,110,0.12);
+}
+.products-page__search input {
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--charcoal);
+  width: 100%;
+}
+.products-page__search input::placeholder { color: var(--warm-gray); }
+
+.products-page__filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--warm-white);
+  color: var(--warm-gray);
+  transition: var(--transition);
+}
+.filter-btn:hover { border-color: var(--charcoal); color: var(--charcoal); }
+.filter-btn.active {
+  background: var(--charcoal);
+  color: var(--cream);
+  border-color: var(--charcoal);
+}
+
+.products-page__filters select {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--warm-white);
+  color: var(--charcoal);
+  font-size: 0.8rem;
+  font-family: 'Jost', sans-serif;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.products-page__filters select:focus {
+  border-color: var(--gold);
+  outline: none;
+}

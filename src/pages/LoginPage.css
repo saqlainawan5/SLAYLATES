@@ -1,0 +1,193 @@
+/* src/pages/LoginPage.css */
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Visual panel */
+.login-page__visual {
+  background: var(--charcoal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.login-page__visual::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(201,169,110,0.15), transparent 60%),
+              radial-gradient(circle at 70% 20%, rgba(196,133,106,0.1), transparent 50%);
+}
+
+.login-page__visual-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+}
+
+.login-page__circle {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.login-page__quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--gold-light);
+  text-align: center;
+  max-width: 260px;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* Form panel */
+.login-page__form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: var(--cream);
+}
+
+.login-form-wrap {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.login-page__back {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  transition: color 0.2s;
+  font-weight: 500;
+}
+.login-page__back:hover { color: var(--gold); }
+
+.login-form__header h1 {
+  font-size: 2.2rem;
+  font-weight: 300;
+  margin-bottom: 0.5rem;
+}
+.login-form__header p {
+  font-size: 0.875rem;
+  color: var(--warm-gray);
+  line-height: 1.6;
+}
+
+/* Tabs */
+.login-form__tabs {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.login-form__tabs button {
+  flex: 1;
+  padding: 0.65rem;
+  background: var(--warm-white);
+  border: none;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--warm-gray);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Jost', sans-serif;
+}
+.login-form__tabs button.active {
+  background: var(--charcoal);
+  color: var(--cream);
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.password-input {
+  position: relative;
+}
+.password-input input {
+  width: 100%;
+  padding-right: 3rem !important;
+}
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--warm-gray);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+.password-toggle:hover { color: var(--charcoal); }
+
+.login-form__error {
+  background: rgba(196,133,106,0.12);
+  border: 1px solid var(--rose);
+  color: var(--rose);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+.login-form__success {
+  background: rgba(201,169,110,0.1);
+  border: 1px solid var(--gold);
+  color: var(--gold-dark);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+.login-form__submit {
+  width: 100%;
+  padding: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.login-form__switch {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--warm-gray);
+}
+.login-form__switch button {
+  background: none;
+  border: none;
+  color: var(--gold-dark);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.login-form__switch button:hover { color: var(--charcoal); }
+
+@media (max-width: 768px) {
+  .login-page { grid-template-columns: 1fr; }
+  .login-page__visual { display: none; }
+  .login-page__form-panel { padding-top: 6rem; align-items: flex-start; }
+}
