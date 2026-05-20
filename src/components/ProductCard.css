@@ -72,3 +72,31 @@
   gap: 0.6rem;
   font-size: 0.9rem;
 }
+.wishlist-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.wishlist-btn:hover {
+  transform: scale(1.1);
+}
+
+.wishlist-btn.active {
+  color: #e63946;
+}
+
+.saved-label {
+  color: #b8860b;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 600;
+}

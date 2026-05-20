@@ -8,8 +8,10 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './ProductDetailPage.css';
 
+/* ================= STAR RATING ================= */
 function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
   const [hover, setHover] = useState(0);
+
   return (
     <div className="stars">
       {[1, 2, 3, 4, 5].map((s) => (
@@ -19,31 +21,35 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
           onMouseEnter={() => onChange && setHover(s)}
           onMouseLeave={() => onChange && setHover(0)}
           onClick={() => onChange && onChange(s)}
-          style={{ cursor: onChange ? 'pointer' : 'default', fontSize: '1.2rem' }}
-        >★</span>
+        >
+          ★
+        </span>
       ))}
     </div>
   );
 }
 
-function ReviewCard({ review }: { review: Review }) {
-  return (
-    <div className="review-card">
-      <div className="review-card__top">
-        <div className="review-card__avatar">{review.reviewer_name[0].toUpperCase()}</div>
-        <div>
-          <p className="review-card__name">{review.reviewer_name}</p>
-          <StarRating value={review.rating} />
-        </div>
-        <span className="review-card__date">
-          {new Date(review.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-        </span>
-      </div>
-      {review.comment && <p className="review-card__comment">{review.comment}</p>}
-    </div>
-  );
+/* ================= WISHLIST (LOCAL STORAGE) ================= */
+function toggleWishlist(productId: string) {
+  const existing = JSON.parse(localStorage.getItem('wishlist') || '[]');
+  let updated;
+
+  if (existing.includes(productId)) {
+    updated = existing.filter((id: string) => id !== productId);
+  } else {
+    updated = [...existing, productId];
+  }
+
+  localStorage.setItem('wishlist', JSON.stringify(updated));
+  return updated;
 }
 
+function isWishlisted(productId: string) {
+  const existing = JSON.parse(localStorage.getItem('wishlist') || '[]');
+  return existing.includes(productId);
+}
+
+/* ================= COMPONENT ================= */
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -58,8 +64,9 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState('');
+  const [wishlisted, setWishlisted] = useState(false);
 
-  // Review form
+  /* Review state */
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -68,11 +75,24 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([productsApi.getById(id), reviewsApi.getByProduct(id)]).then(([p, r]) => {
-      if (!p) { navigate('/products'); return; }
+
+    Promise.all([
+      productsApi.getById(id),
+      reviewsApi.getByProduct(id),
+    ]).then(([p, r]) => {
+      if (!p) return navigate('/products');
+
       setProduct(p);
       setReviews(r);
       setLoading(false);
+
+      /* wishlist check */
+      setWishlisted(isWishlisted(p.id));
+
+      /* recently viewed */
+      const recent = JSON.parse(localStorage.getItem('recent') || '[]');
+      const updated = [p.id, ...recent.filter((x: string) => x !== p.id)].slice(0, 5);
+      localStorage.setItem('recent', JSON.stringify(updated));
     });
   }, [id]);
 
@@ -81,12 +101,14 @@ export default function ProductDetailPage() {
     setTimeout(() => setToast(''), 3000);
   }
 
+  /* ================= CART ================= */
   async function handleAddToCart() {
-    if (!user) { navigate('/login'); return; }
+    if (!user) return navigate('/login');
+
     if (product!.sizes.length > 0 && !selectedSize) {
-      showToast('Please select a size');
-      return;
+      return showToast('Please select a size');
     }
+
     setAdding(true);
     try {
       await addItem(product!.id, selectedSize, qty);
@@ -96,11 +118,31 @@ export default function ProductDetailPage() {
     }
   }
 
+  /* ================= BUY NOW ================= */
+  async function handleBuyNow() {
+    await handleAddToCart();
+    navigate('/checkout');
+  }
+
+  /* ================= WISHLIST ================= */
+  function handleWishlist() {
+    const updated = toggleWishlist(product!.id);
+    setWishlisted(updated.includes(product!.id));
+    showToast(wishlisted ? 'Removed from wishlist' : 'Added to wishlist ❤️');
+  }
+
+  /* ================= REVIEW ================= */
   async function handleReviewSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!reviewName.trim()) { setReviewError('Please enter your name'); return; }
+
+    if (!reviewName.trim()) {
+      setReviewError('Please enter your name');
+      return;
+    }
+
     setSubmittingReview(true);
     setReviewError('');
+
     try {
       const r = await reviewsApi.add({
         product_id: product!.id,
@@ -108,6 +150,7 @@ export default function ProductDetailPage() {
         rating: reviewRating,
         comment: reviewComment.trim() || undefined,
       });
+
       setReviews((prev) => [r, ...prev]);
       setReviewName('');
       setReviewRating(5);
@@ -120,193 +163,96 @@ export default function ProductDetailPage() {
     }
   }
 
-  if (loading) return <div className="loading-screen"><div className="spinner"/></div>;
+  if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
   if (!product) return null;
 
   const salePrice = getSalePrice(product);
   const hasDiscount = product.sale_active && product.sale_percentage;
   const allImages = [product.image_url, ...(product.images || [])].filter(Boolean) as string[];
-  const avgRating = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
 
   return (
     <div className="page product-detail-page">
       <div className="container">
-        {/* Breadcrumb */}
-        <nav className="breadcrumb">
-          <a href="/products">Collection</a> <span>/</span> <span>{product.name}</span>
-        </nav>
+
+        {/* HEADER ACTIONS */}
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <button onClick={handleWishlist} className="btn btn-ghost">
+            {wishlisted ? '❤️ Wishlisted' : '♡ Add to Wishlist'}
+          </button>
+        </div>
 
         <div className="product-detail__grid">
-          {/* Images */}
+
+          {/* IMAGES */}
           <div className="product-detail__images">
-            <div className="product-detail__main-image">
-              {allImages.length > 0
-                ? <img src={allImages[selectedImage]} alt={product.name} />
-                : <div className="product-detail__image-placeholder">
-                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <polyline points="21,15 16,10 5,21"/>
-                    </svg>
-                  </div>
-              }
-              {hasDiscount && (
-                <span className="badge badge-sale product-detail__sale-badge">
-                  -{product.sale_percentage}% OFF
-                </span>
-              )}
-            </div>
+            <img src={allImages[selectedImage]} alt={product.name} />
+
             {allImages.length > 1 && (
               <div className="product-detail__thumbnails">
                 {allImages.map((img, i) => (
-                  <button
+                  <img
                     key={i}
-                    className={`product-detail__thumb ${i === selectedImage ? 'active' : ''}`}
+                    src={img}
                     onClick={() => setSelectedImage(i)}
-                  >
-                    <img src={img} alt="" />
-                  </button>
+                    style={{ cursor: 'pointer', width: 50, margin: 5 }}
+                  />
                 ))}
               </div>
             )}
           </div>
 
-          {/* Info */}
+          {/* INFO */}
           <div className="product-detail__info">
-            <p className="product-detail__category">{product.category || 'Bracelet'}</p>
-            <h1 className="product-detail__name">{product.name}</h1>
 
-            {/* Rating summary */}
-            {avgRating && (
-              <div className="product-detail__rating">
-                <StarRating value={Math.round(parseFloat(avgRating))} />
-                <span>{avgRating} ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
-              </div>
-            )}
+            <h1>{product.name}</h1>
 
-            {/* Price */}
-            <div className="product-detail__price">
+            <p>
               {hasDiscount ? (
                 <>
-                  <span className="price-sale product-detail__price-sale">{formatPrice(salePrice)}</span>
-                  <span className="price-original product-detail__price-original">{formatPrice(product.price)}</span>
-                  <span className="badge badge-sale">Save {product.sale_percentage}%</span>
+                  <span>{formatPrice(salePrice)}</span>
+                  <del style={{ marginLeft: 10 }}>{formatPrice(product.price)}</del>
                 </>
               ) : (
-                <span className="product-detail__price-main">{formatPrice(product.price)}</span>
+                formatPrice(product.price)
               )}
-            </div>
-
-            {/* Description */}
-            {product.description && (
-              <div className="product-detail__description">
-                <h4>Description</h4>
-                <p>{product.description}</p>
-              </div>
-            )}
-
-            {/* Sizes */}
-            {product.sizes && product.sizes.length > 0 && (
-              <div className="product-detail__sizes">
-                <h4>Size <em>(in inches)</em></h4>
-                <div className="size-options">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size}
-                      className={`size-btn ${selectedSize === size ? 'active' : ''}`}
-                      onClick={() => setSelectedSize(size)}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Quantity + Add to Cart */}
-            <div className="product-detail__actions">
-              <div className="quantity-control">
-                <button onClick={() => setQty((q) => Math.max(1, q - 1))}>−</button>
-                <span>{qty}</span>
-                <button onClick={() => setQty((q) => q + 1)}>+</button>
-              </div>
-              <button
-                className="btn btn-primary product-detail__add-btn"
-                onClick={handleAddToCart}
-                disabled={adding}
-              >
-                {adding ? 'Adding...' : 'Add to Cart'}
-              </button>
-            </div>
-
-            <p className="product-detail__stock">
-              {product.stock > 0
-                ? `✦ ${product.stock} left in stock`
-                : '✦ Made to order'}
             </p>
-          </div>
-        </div>
 
-        {/* REVIEWS SECTION */}
-        <div className="reviews-section">
-          <div className="divider"/>
-          <h2 className="reviews-section__title">Customer Reviews</h2>
+            {/* SIZE */}
+            {product.sizes?.length > 0 && (
+              <div>
+                {product.sizes.map((s) => (
+                  <button key={s} onClick={() => setSelectedSize(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          {/* Review stats */}
-          {reviews.length > 0 && (
-            <div className="reviews-stats">
-              <div className="reviews-stats__score">
-                <span className="reviews-stats__avg">{avgRating}</span>
-                <StarRating value={Math.round(parseFloat(avgRating!))} />
-                <span className="reviews-stats__count">{reviews.length} reviews</span>
-              </div>
-            </div>
-          )}
-
-          {/* Review list */}
-          <div className="reviews-list">
-            {reviews.length === 0
-              ? <p className="empty-state" style={{ padding: '2rem 0' }}>Be the first to review this piece!</p>
-              : reviews.map((r) => <ReviewCard key={r.id} review={r} />)
-            }
-          </div>
-
-          {/* Add review form */}
-          <div className="add-review">
-            <h3>Leave a Review</h3>
-            <form onSubmit={handleReviewSubmit} className="add-review__form">
-              <div className="form-group">
-                <label>Your Name *</label>
-                <input
-                  type="text"
-                  value={reviewName}
-                  onChange={(e) => setReviewName(e.target.value)}
-                  placeholder="Jane Doe"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Rating *</label>
-                <StarRating value={reviewRating} onChange={setReviewRating} />
-              </div>
-              <div className="form-group">
-                <label>Comment</label>
-                <textarea
-                  rows={4}
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="Share your thoughts about this bracelet..."
-                />
-              </div>
-              {reviewError && <p className="error-msg">{reviewError}</p>}
-              <button type="submit" className="btn btn-primary" disabled={submittingReview}>
-                {submittingReview ? 'Submitting...' : 'Submit Review'}
+            {/* ACTIONS */}
+            <div style={{ marginTop: 20 }}>
+              <button onClick={handleAddToCart} disabled={adding}>
+                Add to Cart
               </button>
-            </form>
+
+              <button onClick={handleBuyNow}>
+                Buy Now ⚡
+              </button>
+            </div>
+
           </div>
         </div>
+
+        {/* REVIEWS */}
+        <div>
+          <h2>Reviews</h2>
+          {reviews.map((r) => (
+            <div key={r.id}>
+              <strong>{r.reviewer_name}</strong>
+              <p>{r.comment}</p>
+            </div>
+          ))}
+        </div>
+
       </div>
 
       {toast && <div className="toast">{toast}</div>}

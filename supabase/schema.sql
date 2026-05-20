@@ -186,3 +186,28 @@ create index idx_orders_user on public.orders(user_id);
 -- SEED: Make first user admin (run after creating your account)
 -- UPDATE public.profiles SET is_admin = true WHERE email = 'your@email.com';
 -- ============================================================
+create table public.wishlist (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  product_id uuid references public.products(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  unique(user_id, product_id)
+);
+
+alter table public.wishlist enable row level security;
+
+create policy "Users can manage their wishlist"
+  on public.wishlist for all
+  using (auth.uid() = user_id);
+
+  alter table public.orders
+add column payment_method text default 'cod'
+check (payment_method in ('cod','jazzcash','easypaisa'));
+
+alter table public.orders
+add column payment_status text default 'unpaid'
+check (payment_status in ('unpaid','paid','failed'));
+
+alter table public.orders
+add column tracking_number text,
+add column notes text;
